@@ -23,7 +23,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             Add(_infoLabel);
         }
 
-        public void Update(string log) {
+        public void Setup(string log) {
             _infoLabel.text = log;
         }
     }

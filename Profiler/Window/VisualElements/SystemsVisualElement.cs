@@ -1,35 +1,54 @@
+using System;
 using System.Collections.Generic;
-using UnityEngine;
+using System.Linq;
 using UnityEngine.UIElements;
 
 namespace Sw1f1.Ecs.Editor.Profiler {
     public class SystemsVisualElement : AbstractProfilerVisualElement {
         private readonly EcsProfiler _profiler;
-        private readonly List<SystemVisualElement> _elements;
+        private readonly ListView _listView;
+        private List<EcsProfilerSystem> _cachedSystems;
+        private IWorld _currentWorld;
         
         public SystemsVisualElement(EcsProfiler profiler) {
             _profiler = profiler;
-            _elements = new List<SystemVisualElement>();
+            _listView = new ListView();
+            _listView.selectionType = SelectionType.None;
+            _listView.fixedItemHeight = 25;
+            _listView.style.flexGrow = 1;
+            _listView.virtualizationMethod = CollectionVirtualizationMethod.FixedHeight;
+            _listView.reorderable = true;
+            _listView.makeItem = () => new SystemVisualElement();
+            _listView.bindItem = (element, i) => {
+                (element as SystemVisualElement).Setup(_cachedSystems[i]);
+            }; 
         }
         
-        public override void Update(IWorld currentWorld) {
-            Clear();
-            
-            int index = 0;
-            foreach (var system in _profiler.GetSystems(currentWorld)) {
-                var element = GetOrCreateElement(index);
-                element.Update(system);
-                Add(element);
-                index++;
-            }
+        public override void Setup(IWorld currentWorld) {
+            _currentWorld = currentWorld;
+            Rebuild();
         }
 
-        private SystemVisualElement GetOrCreateElement(int index) {
-            if (_elements.Count <= index) {
-                _elements.Add(new SystemVisualElement());
+        public override void Update() {
+            if (_cachedSystems == null) {
+                return;
             }
             
-            return _elements[index];
+            _cachedSystems.Sort((a, b) => {
+                if (b.ExecutionTimeMs.Equals(a.ExecutionTimeMs)) {
+                    return String.Compare(b.Name, a.Name, StringComparison.Ordinal);
+                }
+                return b.ExecutionTimeMs.CompareTo(a.ExecutionTimeMs);
+            });
+            _listView.RefreshItems();
+        }
+
+        private void Rebuild() {
+            Clear();
+            Add(_listView);
+            _cachedSystems = _profiler.GetSystems(_currentWorld).ToList();
+            _listView.itemsSource = _cachedSystems;
+            _listView.Rebuild();
         }
     }
 }

@@ -4,13 +4,15 @@ using System.Diagnostics;
 namespace Sw1f1.Ecs.Editor.Profiler {
     public class EcsProfilerSystem : IDisposable {
         public readonly ISystem System;
-        public string Name => System.GetType().Name;
+        public string Name => ProfilerUtilities.GetCleanGenericTypeName(System.GetType());
         
         public double ExecutionTimeMs {get; private set;}
         public long Allocations {get; private set;}
         
         private Stopwatch _stopwatch;
         private long _memoryBefore;
+        
+        public event Action OnUpdate;
 
         public EcsProfilerSystem(ISystem system) {
             System = system;
@@ -26,6 +28,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             ExecutionTimeMs = _stopwatch?.Elapsed.TotalMilliseconds ?? 0;
             long memoryAfter = GC.GetTotalMemory(false);
             Allocations = memoryAfter - _memoryBefore;
+            OnUpdate?.Invoke();
         }
 
         public void Dispose() {

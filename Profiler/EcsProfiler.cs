@@ -5,10 +5,15 @@ using System.Text;
 
 namespace Sw1f1.Ecs.Editor.Profiler {
     public class EcsProfiler : IDisposable {
+        private const int LOG_LENGTH = 999;
         private readonly Dictionary<IWorld, Dictionary<ISystem, EcsProfilerSystem>> _worldMap;
         private readonly Dictionary<IWorld, EcsProfilerSystem> _currentSystem;
         private readonly Dictionary<IWorld, List<ComponentChangeLog>> _componentChangeLogs;
         private readonly Dictionary<IWorld, StringBuilder> _componentChangeLogBuilder;
+
+        public event Action<IWorld> OnChangeEntities;
+        public event Action<IWorld, ComponentChangeLog> OnAddComponentChangeLog;
+        public event Action<IWorld> OnClearComponentChangeLog;
         
         public IEnumerable<string> WorldNames => _worldMap.Keys.Select(x => $"World {x.Id}");
         public bool IsLogPause { get; set; }
@@ -59,6 +64,8 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             if (_componentChangeLogBuilder.TryGetValue(world, out var stringBuilder)) {
                 stringBuilder.Clear();   
             }
+            
+            OnClearComponentChangeLog?.Invoke(world);
         }
         
         private void RegisterWorld(IWorld world) {
@@ -66,6 +73,8 @@ namespace Sw1f1.Ecs.Editor.Profiler {
                 _worldMap[world] = new Dictionary<ISystem, EcsProfilerSystem>();
                 _componentChangeLogs[world] = new List<ComponentChangeLog>();
                 _componentChangeLogBuilder[world] = new StringBuilder();
+                _currentSystem[world] = null;
+                
                 world.OnCreateEntity += CreateEntity;
                 world.OnCopyEntity += CopyEntity;
                 world.OnDestroyEntity += DestroyEntity;
@@ -101,70 +110,92 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         private void CreateEntity(IWorld world, Entity entity) {
             string systemName = "";
             if (_currentSystem.TryGetValue(world, out var value)) {
-                systemName = value.Name;
+                systemName = value?.Name ?? "";
             }
 
             if (!IsLogPause) {
                 var log = ComponentChangeLog.CreateEntity(entity, systemName, DateTime.Now);
-                _componentChangeLogs[world].Add(log);
+                _componentChangeLogs[world].Insert(0, log);
                 _componentChangeLogBuilder[world].Append("\n");
-                _componentChangeLogBuilder[world].Append(log.ToString());   
+                _componentChangeLogBuilder[world].Append(log.ToString()); 
+                ClearLogIfLimit(world);
+                OnAddComponentChangeLog?.Invoke(world, log);
             }
+            
+            OnChangeEntities?.Invoke(world);
         }
         
         private void CopyEntity(IWorld world, Entity entity) {
             string systemName = "";
             if (_currentSystem.TryGetValue(world, out var value)) {
-                systemName = value.Name;
+                systemName = value?.Name ?? "";
             }
 
             if (!IsLogPause) {
                 var log = ComponentChangeLog.CloneEntity(entity, systemName, DateTime.Now);
-                _componentChangeLogs[world].Add(log);
+                _componentChangeLogs[world].Insert(0, log);
                 _componentChangeLogBuilder[world].Append("\n");
                 _componentChangeLogBuilder[world].Append(log.ToString());
+                ClearLogIfLimit(world);
+                OnAddComponentChangeLog?.Invoke(world, log);
             }
+            
+            OnChangeEntities?.Invoke(world);
         }
         
         private void DestroyEntity(IWorld world, Entity entity) {
             string systemName = "";
             if (_currentSystem.TryGetValue(world, out var value)) {
-                systemName = value.Name;
+                systemName = value?.Name ?? "";
             }
 
             if (!IsLogPause) {
                 var log = ComponentChangeLog.DestroyEntity(entity, systemName, DateTime.Now);
-                _componentChangeLogs[world].Add(log);
+                _componentChangeLogs[world].Insert(0, log);
                 _componentChangeLogBuilder[world].Append("\n");
                 _componentChangeLogBuilder[world].Append(log.ToString());
+                ClearLogIfLimit(world);
+                OnAddComponentChangeLog?.Invoke(world, log);
             }
+            
+            OnChangeEntities?.Invoke(world);
         }
         
         private void AddComponent(IWorld world, Entity entity, Type componentType) {
             string systemName = "";
             if (_currentSystem.TryGetValue(world, out var value)) {
-                systemName = value.Name;
+                systemName = value?.Name ?? "";
             }
 
             if (!IsLogPause) {
                 var log = ComponentChangeLog.AddComponent(entity, systemName, componentType.Name, DateTime.Now);
-                _componentChangeLogs[world].Add(log);
+                _componentChangeLogs[world].Insert(0, log);
                 _componentChangeLogBuilder[world].Append("\n");
                 _componentChangeLogBuilder[world].Append(log.ToString());
+                ClearLogIfLimit(world);
+                OnAddComponentChangeLog?.Invoke(world, log);
             }
         }
         
         private void RemoveComponent(IWorld world, Entity entity, Type componentType) {
             string systemName = "";
             if (_currentSystem.TryGetValue(world, out var value)) {
-                systemName = value.Name;
+                systemName = value?.Name ?? "";
             }
 
             if (!IsLogPause) {
                 var log = ComponentChangeLog.RemoveComponent(entity, systemName, componentType.Name, DateTime.Now);
-                _componentChangeLogs[world].Add(log);
+                _componentChangeLogs[world].Insert(0, log);
                 _componentChangeLogBuilder[world].Append("\n");
                 _componentChangeLogBuilder[world].Append(log.ToString());
+                ClearLogIfLimit(world);
+                OnAddComponentChangeLog?.Invoke(world, log);
+            }
+        }
+
+        private void ClearLogIfLimit(IWorld world) {
+            if (_componentChangeLogs[world].Count > LOG_LENGTH) {
+                _componentChangeLogs[world].RemoveAt(_componentChangeLogs[world].Count - 1);
             }
         }
 

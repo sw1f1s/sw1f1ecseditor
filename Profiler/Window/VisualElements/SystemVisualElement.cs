@@ -5,6 +5,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
     public class SystemVisualElement : VisualElement {
         private readonly Label _name;
         private readonly Label _info;
+        private EcsProfilerSystem _system;
         
         public SystemVisualElement() {
             style.flexDirection = FlexDirection.Row;
@@ -29,9 +30,19 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             Add(_info);
         }
 
-        public void Update(EcsProfilerSystem system) {
-            _name.text = system.Name;
-            _info.text = $"{system.ExecutionTimeMs:F2} ms   {FormatBytes(system.Allocations)} alloc";
+        public void Setup(EcsProfilerSystem system) {
+            if (_system != null) {
+                _system.OnUpdate -= Update;
+            }
+            
+            _system = system;
+            _name.text = _system.Name;
+            _system.OnUpdate += Update;
+            Update();
+        }
+
+        private void Update() {
+            _info.text = $"{_system.ExecutionTimeMs:F2} ms   {FormatBytes(_system.Allocations)} alloc";
         }
         
         private static string FormatBytes(long bytes) {

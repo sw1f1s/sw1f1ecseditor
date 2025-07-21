@@ -13,7 +13,7 @@
         "profiler"
     ],
     "dependencies": {
-        "com.unity.collections": "2.5.3"
+        "com.unity.collections": "2.5.3",
         "com.sw1f1s.ecs": "0.5.1"
     },
     "repository": {

@@ -17,6 +17,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         private EcsProfilerPanelType _panelType;
         private Dictionary<EcsProfilerPanelType, AbstractProfilerVisualElement> _panels;
         private IWorld _currentWorld;
+        private float _updateDelta;
         
         [MenuItem("Tools/Ecs/Profiler")]
         public static void ShowWindow() {
@@ -51,11 +52,24 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             _worldDropdown = new DropdownField("World", _profiler.WorldNames.ToList(), 0);
             _worldDropdown.style.width = 180;
             _worldDropdown.labelElement.style.minWidth = 40;
-            _worldDropdown.RegisterValueChangedCallback(evt => { RefreshContent(); });
+            _worldDropdown.RegisterValueChangedCallback(evt => {
+                RefreshContent();
+            });
             
-            _systemsButton = new Button(() => { _panelType = EcsProfilerPanelType.Systems; }) { text = "Systems" };
-            _entitiesButton = new Button(() => { _panelType = EcsProfilerPanelType.Entities; }) { text = "Entities" };
-            _logButton = new Button(() => { _panelType = EcsProfilerPanelType.Log; }) { text = "Logs" };
+            _systemsButton = new Button(() => {
+                _panelType = EcsProfilerPanelType.Systems;
+                RefreshContent();
+            }) { text = "Systems" };
+            
+            _entitiesButton = new Button(() => {
+                _panelType = EcsProfilerPanelType.Entities;
+                RefreshContent();
+            }) { text = "Entities" };
+            
+            _logButton = new Button(() => {
+                _panelType = EcsProfilerPanelType.Log;
+                RefreshContent();
+            }) { text = "Logs" };
 
             _systemsButton.style.flexGrow = 1;
             _entitiesButton.style.flexGrow = 1;
@@ -71,7 +85,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
 
             _root.Add(toolbar);
             
-            _contentPanel = new ScrollView();
+            _contentPanel = new VisualElement();
             _contentPanel.style.flexGrow = 1;
             _root.Add(_contentPanel);
             
@@ -84,8 +98,26 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         }
         
         private void UpdateProfiler() {
-            _worldDropdown.choices = new List<string>(_profiler.WorldNames);
+            if (_currentWorld != null && !_currentWorld.IsAlive()) {
+                _currentWorld = null;
+                RefreshContent();
+            }
             
+            _worldDropdown.choices = new List<string>(_profiler.WorldNames);
+            if (_currentWorld == null && _worldDropdown.choices.Count > 0) {
+                _worldDropdown.value = _worldDropdown.choices[0];
+                RefreshContent();
+            }
+
+            _updateDelta += Time.smoothDeltaTime;
+            if (_updateDelta >= 0.5f) {
+                _panels[_panelType].Update();
+                _updateDelta = 0;
+            }
+        }
+
+        private void RefreshContent() {
+            _currentWorld = _profiler.GetWorldByName(_worldDropdown.value);
             _contentPanel.Clear();
             if (_currentWorld == null) {
                 var l = new Label($"No World Selected");
@@ -100,15 +132,11 @@ namespace Sw1f1.Ecs.Editor.Profiler {
                 _contentPanel.Add(l);
                 return;
             }
-
+            
             var currentPanel = _panels[_panelType];
-            currentPanel.Update(_currentWorld);
+            currentPanel.Setup(_currentWorld);
             _contentPanel.Add(currentPanel);
             _root.MarkDirtyRepaint();
-        }
-
-        private void RefreshContent() {
-            _currentWorld = _profiler.GetWorldByName(_worldDropdown.value);
         }
     }
 }
