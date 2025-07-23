@@ -9,8 +9,6 @@ namespace Sw1f1.Ecs.Editor {
     public static class ComponentDrawer {
         private static readonly Dictionary<Type, FieldInfo[]> ComponentFieldsCache = new Dictionary<Type, FieldInfo[]>();
         private static List<AbstractComponentFieldDrawer> _componentFieldDrawers;
-        
-        public static Action<Entity> OnClickEntity;
 
         public static FieldInfo[] GetFields(Type type) {
             if (!ComponentFieldsCache.ContainsKey(type)) {
@@ -20,11 +18,11 @@ namespace Sw1f1.Ecs.Editor {
             return ComponentFieldsCache[type];
         }
         
-        public static VisualElement DrawTypeField(object component, FieldInfo field, IWorld world) {
+        public static VisualElement DrawTypeField(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             foreach (var drawer in GetComponentDrawers()) {
                 try {
                     if (drawer.CanDrawGUI(field.GetValue(component))) {
-                        return drawer.DrawGUI(component, field, world);
+                        return drawer.DrawGUI(entityVisualElement, component, field, world);
                     }
                 } catch (Exception e) {
                     return new Label(e.Message);
@@ -34,11 +32,11 @@ namespace Sw1f1.Ecs.Editor {
             return new Label($"Not found drawer for {field.Name}");
         }
         
-        public static VisualElement DrawTypeField(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public static VisualElement DrawTypeField(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             foreach (var drawer in GetComponentDrawers()) {
                 try {
                     if (drawer.CanDrawGUI(fieldValue)) {
-                        return drawer.DrawGUI(name, fieldValue, fieldType, component, world);
+                        return drawer.DrawGUI(entityVisualElement, name, fieldValue, fieldType, component, world);
                     }
                 } catch (Exception e) {
                     return new Label(e.Message);

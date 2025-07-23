@@ -9,13 +9,13 @@ namespace Sw1f1.Ecs.Editor {
             return true;
         }
 
-        public override VisualElement DrawGUI(object component, FieldInfo field, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var shortName = GetShortName(field);
-            return DrawGUI(shortName, fieldValue, field.FieldType, component, world);
+            return DrawGUI(entityVisualElement, shortName, fieldValue, field.FieldType, component, world);
         }
 
-        public override VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var valLabel = new TextField(name);
             valLabel.value = fieldValue.ToString();
             valLabel.style.flexDirection = FlexDirection.Row;

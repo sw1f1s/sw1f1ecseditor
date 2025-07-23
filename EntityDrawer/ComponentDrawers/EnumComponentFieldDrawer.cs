@@ -9,14 +9,14 @@ namespace Sw1f1.Ecs.Editor {
             return component.GetType().IsEnum;
         }
 
-        public override VisualElement DrawGUI(object component, FieldInfo field, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var fieldType = field.FieldType;
             var shortName = GetShortName(field);
-            return DrawGUI(shortName, fieldValue, fieldType, component, world);
+            return DrawGUI(entityVisualElement, shortName, fieldValue, fieldType, component, world);
         }
 
-        public override VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var enumValue = (Enum) fieldValue;
             var isFlags = Attribute.IsDefined (fieldType, typeof(FlagsAttribute));
 

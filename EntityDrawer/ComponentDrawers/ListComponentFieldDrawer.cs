@@ -15,13 +15,13 @@ namespace Sw1f1.Ecs.Editor {
             return component.GetType().IsArray || component is IList;
         }
 
-        public override VisualElement DrawGUI(object component, FieldInfo field, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var shortName = GetShortName(field);
-            return DrawGUI(shortName, fieldValue, field.FieldType, component, world);
+            return DrawGUI(entityVisualElement, shortName, fieldValue, field.FieldType, component, world);
         }
 
-        public override VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var root = new VisualElement();
             if (fieldValue is not IList list) {
                 root.Add(new Label("Not a list"));
@@ -53,7 +53,7 @@ namespace Sw1f1.Ecs.Editor {
             
             for (int i = 0; i < list.Count; i++) {
                 var label = $"Element {i}";
-                var element = ComponentDrawer.DrawTypeField(label, list[i], elementType, component, world);
+                var element = ComponentDrawer.DrawTypeField(entityVisualElement, label, list[i], elementType, component, world);
                 root.Add(element);
             }
 

@@ -5,8 +5,8 @@ using UnityEngine.UIElements;
 namespace Sw1f1.Ecs.Editor {
     public abstract class AbstractComponentFieldDrawer {
         public abstract bool CanDrawGUI(object component);
-        public abstract VisualElement DrawGUI(object component, FieldInfo field, IWorld world);
-        public abstract VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world);
+        public abstract VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world);
+        public abstract VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world);
 
         protected string GetShortName(FieldInfo field) {
             var shortName = field.Name;

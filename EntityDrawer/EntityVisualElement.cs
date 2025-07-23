@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 using Sw1f1.Ecs.Editor.Profiler;
 using UnityEditor;
 using UnityEngine;
@@ -10,8 +11,9 @@ namespace Sw1f1.Ecs.Editor {
         private readonly Foldout _foldout;
         private readonly Dictionary<string, Foldout> _foldouts = new Dictionary<string, Foldout>();
         private Entity _entity;
+        public Action<Entity> OnClickEntity { get; set; }
 
-        public EntityVisualElement() {
+        public EntityVisualElement([CanBeNull] Action<Entity> clickEntity = null) {
             _foldout = new Foldout() { text = "" };
             _foldout.style.marginBottom = 4;
             _foldout.style.paddingLeft = 4;
@@ -23,6 +25,8 @@ namespace Sw1f1.Ecs.Editor {
             Add(_foldout);
             RegisterCallback<AttachToPanelEvent>(OnAttached);
             RegisterCallback<DetachFromPanelEvent>(OnDetached);
+            
+            OnClickEntity = clickEntity;
         }
         
         public void Setup(Entity entity) {
@@ -65,7 +69,7 @@ namespace Sw1f1.Ecs.Editor {
                 var fields = ComponentDrawer.GetFields(type);
                 if(fields.Length > 0) {
                     foreach (var fieldInfo in fields) {
-                        var element = ComponentDrawer.DrawTypeField(component, fieldInfo, WorldBuilder.GetWorld(_entity.WorldId));
+                        var element = ComponentDrawer.DrawTypeField(this, component, fieldInfo, WorldBuilder.GetWorld(_entity.WorldId));
                         componentFoldout.Add(element);
                     }
                 }

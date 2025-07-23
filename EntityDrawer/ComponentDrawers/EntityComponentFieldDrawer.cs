@@ -11,13 +11,13 @@ namespace Sw1f1.Ecs.Editor {
             return component is Entity;
         }
 
-        public override VisualElement DrawGUI(object component, FieldInfo field, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var shortName = GetShortName(field);
-            return DrawGUI(shortName, fieldValue, field.FieldType, component, world);
+            return DrawGUI(entityVisualElement, shortName, fieldValue, field.FieldType, component, world);
         }
 
-        public override VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var entity = (Entity)fieldValue;
             
             var propRow = new VisualElement();
@@ -30,7 +30,7 @@ namespace Sw1f1.Ecs.Editor {
             valLabel.style.flexGrow = 1;
 
             string path = $"{component.GetType().Name}/{fieldType.Name}/ {name}";
-            var button = GetButton(path, entity);
+            var button = GetButton(entityVisualElement, path, entity);
             button.style.flexGrow = 1;
             
             propRow.Add(valLabel);
@@ -39,10 +39,10 @@ namespace Sw1f1.Ecs.Editor {
             return propRow;
         }
         
-        private Button GetButton(string path, Entity entity) {
+        private Button GetButton(EntityVisualElement entityVisualElement, string path, Entity entity) {
             if (!_buttons.ContainsKey(path)) {
                 var newButton = new Button(() => {
-                    ComponentDrawer.OnClickEntity?.Invoke(entity);
+                    entityVisualElement.OnClickEntity?.Invoke(entity);
                 }) {
                     text = entity.ToString() 
                 };

@@ -15,13 +15,12 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         public EntitiesVisualElement(EcsProfiler profiler) {
             _profiler = profiler;
             _profiler.OnChangeEntities += ChangeEntity;
-            ComponentDrawer.OnClickEntity += ClickEntity;
 
             _listView = new ListView();
             _listView.selectionType = SelectionType.None;
             _listView.virtualizationMethod = CollectionVirtualizationMethod.DynamicHeight;
             _listView.style.flexGrow = 1;
-            _listView.makeItem = () => new EntityVisualElement();
+            _listView.makeItem = () => new EntityVisualElement(ClickEntity);
             
             _entitySearchField = new TextField("Search:");
             _entitySearchField.style.minHeight = 30;

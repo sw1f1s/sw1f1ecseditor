@@ -15,13 +15,13 @@ namespace Sw1f1.Ecs.Editor {
             return component.GetType().IsArray || component is IDictionary;
         }
 
-        public override VisualElement DrawGUI(object component, FieldInfo field, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var shortName = GetShortName(field);
-            return DrawGUI(shortName, fieldValue, field.FieldType, component, world);
+            return DrawGUI(entityVisualElement, shortName, fieldValue, field.FieldType, component, world);
         }
 
-        public override VisualElement DrawGUI(string name, object fieldValue, Type fieldType, object component, IWorld world) {
+        public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var root = new VisualElement();
             if (fieldValue is not IDictionary dictionary) {
                 root.Add(new Label("Not a dictionary"));
@@ -53,7 +53,7 @@ namespace Sw1f1.Ecs.Editor {
             
             foreach (DictionaryEntry entry in dictionary) {
                 var label = entry.Key.ToString();
-                var element = ComponentDrawer.DrawTypeField(label, entry.Value, valueType, component, world);
+                var element = ComponentDrawer.DrawTypeField(entityVisualElement, label, entry.Value, valueType, component, world);
                 root.Add(element);
             }
 
