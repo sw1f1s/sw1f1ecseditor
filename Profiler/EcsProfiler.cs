@@ -200,7 +200,11 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         }
 
         private void UnregisterWorld(IWorld world) {
-            foreach (var system in _worldMap[world]) {
+            if (!_worldMap.TryGetValue(world, out var value)) {
+                return;
+            }
+            
+            foreach (var system in value) {
                 system.Value.Dispose();
             }
             
