@@ -27,11 +27,13 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         
         private void OnEnable() {
             _profiler = new EcsProfiler();
+            _profiler.OnChangeWorlds += RefreshContent;
             CreateUI();
             EditorApplication.update += UpdateProfiler;
         }
 
         private void OnDisable() {
+            _profiler.OnChangeWorlds -= RefreshContent;
             _profiler?.Dispose();
             EditorApplication.update -= UpdateProfiler;
         }

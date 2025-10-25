@@ -1,19 +1,20 @@
 using System;
 using System.Collections.Generic;
 using System.Reflection;
+using Sw1f1.Ecs.Collections;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
-using Sw1f1.Ecs.Collections;
 
 namespace Sw1f1.Ecs.Editor {
-    public abstract class SparseArrayComponentFieldDrawer<T> : AbstractComponentFieldDrawer {
+    [ComponentFieldDrawer(5)]
+    public class ReadCollectionComponentFieldDrawer : AbstractComponentFieldDrawer {
         private readonly Dictionary<string, Foldout> _foldouts = new Dictionary<string, Foldout>();
         
         public override bool CanDrawGUI(object component) {
-            return component.GetType().IsArray || component is SparseArray<T>;
+            return component is IReadCollection;
         }
-
+        
         public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, object component, FieldInfo field, IWorld world) {
             var fieldValue = field.GetValue(component);
             var shortName = GetShortName(field);
@@ -22,12 +23,12 @@ namespace Sw1f1.Ecs.Editor {
 
         public override VisualElement DrawGUI(EntityVisualElement entityVisualElement, string name, object fieldValue, Type fieldType, object component, IWorld world) {
             var root = new VisualElement();
-            if (fieldValue is not SparseArray<T> list) {
-                root.Add(new Label($"Not a SparseArray<{nameof(T)}>"));
+            if (fieldValue is not IReadCollection list) {
+                root.Add(new Label("Not a list"));
                 return root;
             }
 
-            var elementType = typeof(T);
+            var elementType = fieldType.GetGenericArguments()[0];
 
             var sessionKey = component.GetType() + "/" + name;
             var foldout = GetFoldout(name, sessionKey);
@@ -40,18 +41,17 @@ namespace Sw1f1.Ecs.Editor {
                 return root;   
             }
             
-            if (list.Count == 0) {
+            if (list.GetCount() == 0) {
                 var emptyLabel = new Label("Empty");
                 emptyLabel.style.unityTextAlign = TextAnchor.MiddleLeft;
                 emptyLabel.style.marginLeft = 8;
                 foldout.Add(emptyLabel);
                 return root;
             }
-
-            int index = 0;
-            foreach (var entry in list) {
-                var label = $"Element {index}";
-                var element = ComponentDrawer.DrawTypeField(entityVisualElement, label, entry, elementType, component, world);
+            
+            for (int i = 0; i < list.GetCount(); i++) {
+                var label = $"Element {i}";
+                var element = ComponentDrawer.DrawTypeField(entityVisualElement, label, list.GetItem(i), elementType, component, world);
                 root.Add(element);
             }
 

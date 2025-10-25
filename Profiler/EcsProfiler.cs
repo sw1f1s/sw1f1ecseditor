@@ -11,12 +11,13 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         private readonly Dictionary<IWorld, List<ComponentChangeLog>> _componentChangeLogs;
         private readonly Dictionary<IWorld, StringBuilder> _componentChangeLogBuilder;
 
+        public event Action OnChangeWorlds;
         public event Action<IWorld> OnChangeEntities;
         public event Action<IWorld, ComponentChangeLog> OnAddComponentChangeLog;
         public event Action<IWorld> OnClearComponentChangeLog;
         
         public IEnumerable<string> WorldNames => _worldMap.Keys.Select(x => $"World {x.Id}");
-        public bool IsLogPause { get; set; }
+        public bool IsLogPause { get; set; } = true;
         
         public EcsProfiler() {
             _worldMap = new Dictionary<IWorld, Dictionary<ISystem, EcsProfilerSystem>>();
@@ -55,7 +56,6 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             return _componentChangeLogBuilder[world];
         }
 
-
         public void ClearLog(IWorld world) {
             if (_componentChangeLogs.TryGetValue(world, out var logs)) {
                 logs.Clear();   
@@ -81,6 +81,8 @@ namespace Sw1f1.Ecs.Editor.Profiler {
                 
                 world.OnAddComponent += AddComponent;
                 world.OnRemoveComponent += RemoveComponent;
+                
+                OnChangeWorlds?.Invoke();
             }
         }
 
@@ -97,7 +99,7 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         }
 
         private void StartProfilerSystem(IWorld world, ISystem system) {
-            UnityEngine.Profiling.Profiler.BeginSample(system.GetType().Name);
+            UnityEngine.Profiling.Profiler.BeginSample(ProfilerUtilities.GetCleanGenericTypeName(system.GetType()));
             _currentSystem[world] = _worldMap[world][system];
             _worldMap[world][system].StartRecord();
         }
@@ -223,6 +225,8 @@ namespace Sw1f1.Ecs.Editor.Profiler {
             _componentChangeLogs.Remove(world);
             _componentChangeLogBuilder.Remove(world);
             _worldMap.Remove(world);
+            
+            OnChangeWorlds?.Invoke();
         }
 
         public void Dispose() {
