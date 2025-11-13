@@ -99,7 +99,6 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         }
 
         private void StartProfilerSystem(IWorld world, ISystem system) {
-            UnityEngine.Profiling.Profiler.BeginSample(ProfilerUtilities.GetCleanGenericTypeName(system.GetType()));
             _currentSystem[world] = _worldMap[world][system];
             _worldMap[world][system].StartRecord();
         }
@@ -107,7 +106,6 @@ namespace Sw1f1.Ecs.Editor.Profiler {
         private void EndProfilerSystem(IWorld world, ISystem system) {
             _currentSystem[world] = null;
             _worldMap[world][system].StopRecord();
-            UnityEngine.Profiling.Profiler.EndSample();
         }
         private void CreateEntity(IWorld world, Entity entity) {
             string systemName = "";
